@@ -8,14 +8,14 @@ class Listing:
     def parseDatetime(datetime_str):
         dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         dt = dt.astimezone(timezone('US/Pacific'))
-        return dt
+        return int(dt.strftime('%s')) * 1000
 
     def __init__(self, url, img_url, title, datetime_str, price, distance):
         self.url = url
         self.img_url = img_url
         self.title = title
         self.datetime_str = datetime_str
-        self.datetime = Listing.parseDatetime(datetime_str)
+        self.epoch = Listing.parseDatetime(datetime_str)
         self.price = price
         self.distance = distance
 
@@ -36,7 +36,7 @@ def getTextOfChild(parent, type, search_class, default_value):
     else:
         return default_value
 
-def getListings(base_url, start="0"):
+def getListings(base_url, start="0", latest_epoch=0):
     return_listings = []
     listings_page = requests.get(base_url + f'&s={start}')
     print("Scraping " + base_url + f'&s={start}')
@@ -67,6 +67,8 @@ def getListings(base_url, start="0"):
             listing_price,
             listing_distance
         )
+        if listing.epoch <= latest_epoch: # seen before, terminate early
+            return return_listings
         return_listings.append(listing)
     if n_total_listings != n_page_listings: # more pages exist
         print("more listings!")

@@ -60,20 +60,25 @@ def print_user_results(handle):
         user_results = users_con.execute(query).fetchall()
         print(user_results)
 
-def datetime_to_epoch(datetime):
-    print(datetime)
-    return int(datetime.strftime('%s')) * 1000
-
 def add_user_result(handle, result):
     with sqlite3.connect('users.db') as users_con:
-        epoch_time = datetime_to_epoch(result.datetime)
         query = '''
             INSERT INTO {0} VALUES(?, ?, ?, ?, ?, ?)
         '''.format(
             handle
         )
         users_con.execute(query, (result.url, result.img_url, result.title,
-            epoch_time, result.price, result.distance))
+            result.epoch, result.price, result.distance))
+
+def get_latest_result_epoch(handle):
+    with sqlite3.connect('users.db') as users_con:
+        query = '''
+            SELECT MAX(epoch) FROM {0}
+        '''.format(
+            handle
+        )
+        result = users_con.execute(query).fetchall()
+        return result[0][0] if result else 0
 
 def update_userURL(handle, url):
     with sqlite3.connect('users.db') as users_con:

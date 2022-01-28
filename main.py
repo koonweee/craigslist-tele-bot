@@ -24,24 +24,40 @@ def get_user_url(context, handle):
     else:
         return context
 
-def refresh(update, context):
+def send_formatted_results(update, context):
+    results = context.user_data["results"]
+    for result in results:
+        caption = (
+            f'🚗 ${result.title} - *${result.price}*\n'
+            f'📍 ${result.distance}\n'
+            f'⏱️ ${result.epoch}\n'
+            f'🔗 ${result.url}'
+        )
+        img_404_url = ''
+        img_url = result.img_url if result.img_url else img_404_url
+        context.bot.send_photo(
+            chat_id=update.effective_chat.id,
+            photo=result.img_url,
+            caption=caption
+        )
+
+def all(update, context):
     handle = update.effective_user.username
     if db.user_exists(handle):
         context = get_user_url(context, handle)
-        now = datetime.datetime.now(tz=pytz.utc)
-        now = now.astimezone(timezone('US/Pacific'))
-        nowString = now.strftime("%B %d, %Y %H:%M")
-        message = 'Retrieving cars as of %s...' % nowString
+        message = 'Retrieving all listings'
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
         results = craigslist.getListings(base_url=context.user_data["url"])
+        context.user_data["results"] = results
+        print(f'Requested all listings, got ${len(results)}')
+        send_formatted_results(update, context)
         for result in results:
             db.add_user_result(handle, result)
-        db.print_user_results(handle)
     else:
         message = 'Please set a Craigslist URL using /update_url first'
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
-refresh_handler = CommandHandler('refresh', refresh) # associate /start with above fn
+refresh_handler = CommandHandler('all', all) # associate /start with above fn
 dispatcher.add_handler(refresh_handler)
 
 # conversation to get craigslist URL
