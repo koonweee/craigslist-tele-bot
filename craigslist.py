@@ -1,18 +1,21 @@
 import requests
 from bs4 import BeautifulSoup
-
+from datetime import datetime
+import pytz
+from pytz import timezone
 class Listing:
     @staticmethod
-    def parseDatetime(datetime):
-        parsedDatetime = ''
-        return parsedDatetime
+    def parseDatetime(datetime_str):
+        dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
+        dt = dt.astimezone(timezone('US/Pacific'))
+        return dt
 
     def __init__(self, url, img_url, title, datetime_str, price, distance):
         self.url = url
         self.img_url = img_url
         self.title = title
         self.datetime_str = datetime_str
-        self.parsedDatetime = Listing.parseDatetime(datetime_str)
+        self.datetime = Listing.parseDatetime(datetime_str)
         self.price = price
         self.distance = distance
 

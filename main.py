@@ -25,13 +25,21 @@ def get_user_url(context, handle):
         return context
 
 def refresh(update, context):
-    now = datetime.datetime.now(tz=pytz.utc)
-    now = now.astimezone(timezone('US/Pacific'))
-    nowString = now.strftime("%B %d, %Y %H:%M")
-    message = 'Retrieving cars as of %s...' % nowString
-    context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    results = craigslist.getListings(base_url=context.user_data["url"])
-    print(results[0])
+    handle = update.effective_user.username
+    if db.user_exists(handle):
+        context = get_user_url(context, handle)
+        now = datetime.datetime.now(tz=pytz.utc)
+        now = now.astimezone(timezone('US/Pacific'))
+        nowString = now.strftime("%B %d, %Y %H:%M")
+        message = 'Retrieving cars as of %s...' % nowString
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        results = craigslist.getListings(base_url=context.user_data["url"])
+        for result in results:
+            db.add_user_result(handle, result)
+        db.print_user_results(handle)
+    else:
+        message = 'Please set a Craigslist URL using /update_url first'
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 refresh_handler = CommandHandler('refresh', refresh) # associate /start with above fn
 dispatcher.add_handler(refresh_handler)
@@ -84,6 +92,8 @@ def update_url_updated_handler(update, context):
         db.update_userURL(handle, new_url)
     else:
         db.add_userURL(handle, new_url)
+    db.init_user_results(handle)
+    db.delete_user_results(handle)
     message = f'The URL was updated'
     update.message.reply_text(
         message
