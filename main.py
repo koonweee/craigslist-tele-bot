@@ -234,8 +234,11 @@ def scheduled_new_send(handle):
 def scheduled_new():
     # get all handles from db
     handles = db.get_all_handles()
+    #print(handles)
     if handles:
         for handle in handles:
+            handle = handle[0]
+            #print(f'Sending scheduled update for {handle}')
             scheduled_new_send(handle)
 
 schedule.every(10).minutes.do(scheduled_new)

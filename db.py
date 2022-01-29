@@ -16,7 +16,7 @@ def get_all_handles():
     with sqlite3.connect('users.db') as users_con:
         user_exists_result = users_con.execute('SELECT handle FROM USERS')
         result = user_exists_result.fetchall()
-        return result[0] if len(result) > 0 else None
+        return result if len(result) > 0 else None
 
 def clear_users():
     with sqlite3.connect('users.db') as users_con:
