@@ -8,7 +8,7 @@ class Listing:
     def parseDatetime(datetime_str):
         dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         dt = dt.astimezone(timezone('US/Pacific'))
-        return int(dt.strftime('%s')) * 1000
+        return int(dt.strftime('%s'))
 
     def __init__(self, url, img_url, title, datetime_str, price, distance):
         self.url = url
@@ -39,7 +39,6 @@ def getTextOfChild(parent, type, search_class, default_value):
 def getListings(base_url, start="0", latest_epoch=0):
     return_listings = []
     listings_page = requests.get(base_url + f'&s={start}')
-    print("Scraping " + base_url + f'&s={start}')
     content = listings_page.content
     soup = BeautifulSoup(content, 'html.parser')
     n_total_listings = soup.find('span', class_='totalcount').getText()
@@ -48,7 +47,7 @@ def getListings(base_url, start="0", latest_epoch=0):
     for listing in listings:
         listing_url = listing.a['href']
         listing_img_ele = listing.find('a', class_='result-image gallery')
-        listing_img_url = "No images"
+        listing_img_url = None
         if listing_img_ele:
             listing_img_data_ids = listing_img_ele["data-ids"]
             if listing_img_data_ids:
@@ -71,6 +70,5 @@ def getListings(base_url, start="0", latest_epoch=0):
             return return_listings
         return_listings.append(listing)
     if n_total_listings != n_page_listings: # more pages exist
-        print("more listings!")
         return_listings += getListings(base_url, n_page_listings)
     return return_listings

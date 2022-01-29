@@ -7,9 +7,16 @@ def init_users():
         users_con.execute("""
             CREATE TABLE IF NOT EXISTS USERS (
                 handle TEXT PRIMARY KEY,
-                targeturl TEXT
+                targeturl TEXT,
+                chat_id TEXT
             )
         """)
+
+def get_all_handles():
+    with sqlite3.connect('users.db') as users_con:
+        user_exists_result = users_con.execute('SELECT handle FROM USERS')
+        result = user_exists_result.fetchall()
+        return result[0] if len(result) > 0 else None
 
 def clear_users():
     with sqlite3.connect('users.db') as users_con:
@@ -27,9 +34,15 @@ def get_userURL(handle):
         result = user_target_url.fetchall()
         return result[0][0]
 
-def add_userURL(handle, url):
+def get_userID(handle):
     with sqlite3.connect('users.db') as users_con:
-        users_con.execute('INSERT INTO USERS (handle, targeturl) values(?, ?)', (handle, url))
+        user_target_url = users_con.execute('SELECT chat_id FROM USERS WHERE handle = ?', (handle,))
+        result = user_target_url.fetchall()
+        return result[0][0]
+
+def add_userURL(handle, url, chat_id):
+    with sqlite3.connect('users.db') as users_con:
+        users_con.execute('INSERT INTO USERS (handle, targeturl, chat_id) values(?, ?, ?)', (handle, url, chat_id))
 
 def init_user_results(handle):
     with sqlite3.connect('users.db') as users_con:
@@ -58,12 +71,11 @@ def print_user_results(handle):
             SELECT * FROM {0}
         '''.format(handle)
         user_results = users_con.execute(query).fetchall()
-        print(user_results)
 
 def add_user_result(handle, result):
     with sqlite3.connect('users.db') as users_con:
         query = '''
-            INSERT INTO {0} VALUES(?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO {0} VALUES(?, ?, ?, ?, ?, ?)
         '''.format(
             handle
         )
@@ -78,7 +90,7 @@ def get_latest_result_epoch(handle):
             handle
         )
         result = users_con.execute(query).fetchall()
-        return result[0][0] if result else 0
+        return result[0][0] if result[0][0] else 0
 
 def update_userURL(handle, url):
     with sqlite3.connect('users.db') as users_con:
